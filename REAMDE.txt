@@ -1,0 +1,5 @@
+Build Steps
+-----------
+- $env:GOOS = "linux"
+- go build -o main main.go
+- C:\Users\<user>\go\bin\build-lambda-zip.exe -o main.zip main
