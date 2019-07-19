@@ -113,14 +113,24 @@ func getTodosResponse(filters string, val string, limit int64) (events.APIGatewa
 		return apiResponse, err
 	}
 
-	apiResponse := events.APIGatewayProxyResponse{Body: string(responseBody), StatusCode: http.StatusOK}
+	apiResponse := events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       string(responseBody),
+		StatusCode: http.StatusOK}
 	return apiResponse, nil
 }
 
 func generateErrorResponse(err string, statusCode int) events.APIGatewayProxyResponse {
 	errJSON := &ErrorJson{ErrorMsg: err}
 	errBody, _ := json.Marshal(errJSON)
-	apiResponse := events.APIGatewayProxyResponse{Body: string(errBody), StatusCode: statusCode}
+	apiResponse := events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body:       string(errBody),
+		StatusCode: statusCode}
 	return apiResponse
 }
 
