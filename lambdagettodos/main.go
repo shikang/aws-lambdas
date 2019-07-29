@@ -23,7 +23,7 @@ type ErrorJson struct {
 }
 
 type Todos struct {
-	ID        int    `json:"id"`
+	ID        string `json:"id"`
 	Title     string `json:"title"`
 	Completed bool   `json:"completed"`
 }
