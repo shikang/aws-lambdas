@@ -28,7 +28,7 @@ type Todos struct {
 	Completed bool   `json:"completed"`
 }
 
-func getTodosWithoutAnyFilters(limit int64) ([]Todos, error) {
+func GetTodosWithoutAnyFilters(limit int64) ([]Todos, error) {
 	// Build the scan input parameters
 	params := &dynamodb.ScanInput{
 		TableName: aws.String("Todos"),
@@ -50,7 +50,7 @@ func getTodosWithoutAnyFilters(limit int64) ([]Todos, error) {
 	return todos, nil
 }
 
-func getTodosByCompleted(val bool, limit int64) ([]Todos, error) {
+func GetTodosByCompleted(val bool, limit int64) ([]Todos, error) {
 	filt := expression.Name("Completed").Equal(expression.Value(val))
 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
 	if err != nil {
@@ -82,9 +82,9 @@ func getTodosByCompleted(val bool, limit int64) ([]Todos, error) {
 	return todos, nil
 }
 
-func getTodos(filter string, val string, limit int64) ([]Todos, error) {
+func GetTodos(filter string, val string, limit int64) ([]Todos, error) {
 	if val == "any" {
-		return getTodosWithoutAnyFilters(limit)
+		return GetTodosWithoutAnyFilters(limit)
 	}
 
 	switch filter {
@@ -93,23 +93,23 @@ func getTodos(filter string, val string, limit int64) ([]Todos, error) {
 		if err != nil {
 			return nil, err
 		}
-		return getTodosByCompleted(completed, limit)
+		return GetTodosByCompleted(completed, limit)
 	default:
 		err := errors.New("Invalid filter")
 		return nil, err
 	}
 }
 
-func getTodosResponse(filters string, val string, limit int64) (events.APIGatewayProxyResponse, error) {
-	todos, err := getTodos(filters, val, limit)
+func GetTodosResponse(filters string, val string, limit int64) (events.APIGatewayProxyResponse, error) {
+	todos, err := GetTodos(filters, val, limit)
 	if err != nil {
-		apiResponse := generateErrorResponse(err.Error(), http.StatusInternalServerError)
+		apiResponse := GenerateErrorResponse(err.Error(), http.StatusInternalServerError)
 		return apiResponse, err
 	}
 
 	responseBody, err := json.Marshal(todos)
 	if err != nil {
-		apiResponse := generateErrorResponse(err.Error(), http.StatusInternalServerError)
+		apiResponse := GenerateErrorResponse(err.Error(), http.StatusInternalServerError)
 		return apiResponse, err
 	}
 
@@ -122,7 +122,7 @@ func getTodosResponse(filters string, val string, limit int64) (events.APIGatewa
 	return apiResponse, nil
 }
 
-func generateErrorResponse(err string, statusCode int) events.APIGatewayProxyResponse {
+func GenerateErrorResponse(err string, statusCode int) events.APIGatewayProxyResponse {
 	errJSON := &ErrorJson{ErrorMsg: err}
 	errBody, _ := json.Marshal(errJSON)
 	apiResponse := events.APIGatewayProxyResponse{
@@ -143,15 +143,15 @@ func HandleGetTodosRequest(request events.APIGatewayProxyRequest) (events.APIGat
 			}
 
 			fmt.Print("[GET] Get todos with completed filter: " + completed)
-			return getTodosResponse("completed", completed, queryLimit)
+			return GetTodosResponse("completed", completed, queryLimit)
 		} else {
 			err := errors.New("Empty query string")
-			apiResponse := generateErrorResponse("Empty query string", http.StatusBadGateway)
+			apiResponse := GenerateErrorResponse("Empty query string", http.StatusBadGateway)
 			return apiResponse, err
 		}
 	} else {
 		err := errors.New("Method not allowed")
-		apiResponse := generateErrorResponse("Method Not OK", http.StatusBadGateway)
+		apiResponse := GenerateErrorResponse("Method Not OK", http.StatusBadGateway)
 		return apiResponse, err
 	}
 }
