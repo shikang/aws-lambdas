@@ -41,7 +41,7 @@ func GenerateErrorResponse(err string, statusCode int) events.APIGatewayProxyRes
 		Headers: map[string]string{
 			"Access-Control-Allow-Origin":  "*",
 			"Access-Control-Allow-Headers": "Content-Type",
-			"Access-Control-Allow-Methods": "OPTIONS,POST",
+			"Access-Control-Allow-Methods": "OPTIONS,POST,PUT",
 		},
 		Body:       string(errBody),
 		StatusCode: statusCode}
@@ -99,15 +99,15 @@ func AddTodo(todo Todos) (events.APIGatewayProxyResponse, error) {
 		Headers: map[string]string{
 			"Access-Control-Allow-Origin":  "*",
 			"Access-Control-Allow-Headers": "Content-Type",
-			"Access-Control-Allow-Methods": "OPTIONS,POST",
+			"Access-Control-Allow-Methods": "OPTIONS,POST,PUT",
 		},
 		Body:       string(responseBody),
 		StatusCode: http.StatusOK}
 	return apiResponse, nil
 }
 
-func HandleAddTodosRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	if request.HTTPMethod == "POST" {
+func HandleAddTodoRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if request.HTTPMethod == "POST" || request.HTTPMethod == "PUT" {
 		newTodo := Todos{}
 		err := json.Unmarshal([]byte(request.Body), &newTodo)
 		if err != nil {
@@ -115,7 +115,14 @@ func HandleAddTodosRequest(request events.APIGatewayProxyRequest) (events.APIGat
 			return apiResponse, err
 		}
 
-		return AddTodo(newTodo)
+		if newTodo.Title != "" && newTodo.Title != "null" {
+			fmt.Println("Adding title: " + newTodo.Title)
+			return AddTodo(newTodo)
+		} else {
+			err := errors.New("Adding Title not specified")
+			apiResponse := GenerateErrorResponse(err.Error(), http.StatusInternalServerError)
+			return apiResponse, err
+		}
 	} else {
 		err := errors.New("Method not allowed")
 		apiResponse := GenerateErrorResponse("Method Not OK", http.StatusBadGateway)
@@ -124,5 +131,5 @@ func HandleAddTodosRequest(request events.APIGatewayProxyRequest) (events.APIGat
 }
 
 func main() {
-	lambda.Start(HandleAddTodosRequest)
+	lambda.Start(HandleAddTodoRequest)
 }
